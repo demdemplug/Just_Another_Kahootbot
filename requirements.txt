@@ -1,0 +1,4 @@
+quart==0.19.9
+websockets==13.1
+requests==2.25.1
+hypercorn==0.14.1
