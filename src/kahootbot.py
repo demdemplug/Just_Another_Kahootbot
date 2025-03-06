@@ -137,6 +137,7 @@ class KahootBot:
         await self.wsocket.send(self.payloads.__keepInGame__())
         await self.wsocket.send(self.payloads.__metaConnect__())
 
+    # dont get mad at me i have not made the classes for it yet i am just doing testing
     async def receiveMessages(self):
         """Receives and logs messages from the WebSocket."""
         try:

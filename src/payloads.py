@@ -201,6 +201,7 @@ class Payloads:
             }
         ])
         self.questionIndex += 1
+        print("after send qutison index:", self.questionIndex)
         return payload
 
 

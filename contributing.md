@@ -1,0 +1,2 @@
+## Contributing
+We are looking for developers with strong CSS and HTML skills to help build an interactive page where users can easily spawn bots. If you're interested in contributing, feel free to open an issue or submit a pull request! Or message me on discord @feelfeel2008.

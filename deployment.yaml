@@ -1,15 +1,11 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: utility
----
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: just-another-kahoot-bot
-  namespace: utility
+  namespace: utility # or your namespace
 spec:
-  replicas: 3
+  replicas: 3 # this should auto scale on its own but 3 is a good starting amount
   selector:
     matchLabels:
       app: just-another-kahoot-bot
@@ -18,8 +14,6 @@ spec:
       labels:
         app: just-another-kahoot-bot
     spec:
-      nodeSelector:
-        kubernetes.io/hostname: homelab-0  # Ensure this runs only on homelab-1 node
       containers:
         - name: just-another-kahoot-bot
           image: feelfeel200088/just_another_kahoot_bot
@@ -28,8 +22,8 @@ spec:
             - containerPort: 8000
           resources:
             limits:
-              memory: "8Gi"  # Limit memory to Gi
-              cpu: "1"        # Limit CPU to 1 core
+              memory: "8Gi"  # Limit memory to Gi 
+              cpu: "1"        # Limit CPU to 1 thread
 ---
 apiVersion: v1
 kind: Service
@@ -43,7 +37,7 @@ spec:
     - protocol: TCP
       port: 8000       # External port
       targetPort: 8000  # Container port
-      nodePort: 30005    # Expose on NodePort 30005
+      nodePort: 30005    # Expose on NodePort 30005 or replace with your own nodeport
   type: NodePort  # Exposes the service externally
 ---
 apiVersion: v1
