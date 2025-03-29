@@ -162,7 +162,7 @@ class Payloads:
         ])
     
 
-    def __ezFlooder__(self, id, ack) -> dict:
+    def __heartBeat__(self, id, ack) -> dict:
         return json.dumps([
             {
                 "id": str(id),
@@ -201,7 +201,6 @@ class Payloads:
             }
         ])
         self.questionIndex += 1
-        print("after send qutison index:", self.questionIndex)
         return payload
 
 

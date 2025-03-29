@@ -16,6 +16,7 @@
           pkgs.python312Packages.requests
           pkgs.python312Packages.websockets
           pkgs.python312Packages.quart
+          pkgs.python312Packages.pydantic
           pkgs.nodejs
           pkgs.yarn
         ];

@@ -1,4 +1,4 @@
-from ..src.swarm import Swarm
+from ..Kahoot_Bot.swarm import Swarm
 from quart import request, jsonify
 from . import app
 

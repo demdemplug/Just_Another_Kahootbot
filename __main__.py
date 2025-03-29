@@ -1,7 +1,5 @@
 from .src import run
-try: 
+from .src.events import event_classes
 
-    if __name__ == "__main__":
-        run()
-except KeyboardInterrupt:
-    print("\nProgram interrupted by user. Exiting gracefully...")
+if __name__ == "__main__":
+    run()

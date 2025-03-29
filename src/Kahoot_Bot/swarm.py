@@ -3,6 +3,8 @@ from time import time
 from typing import List
 from .kahootbot import KahootBot
 import secrets
+from ..logger import logger
+
 
 class Swarm:
     def __init__(self):
@@ -27,7 +29,7 @@ class Swarm:
 
     def startNewBot(self):
         """Start a new bot instance and create its task."""
-        print("starting a new bot!")
+        # if the instance is one simply name the bot without the hash
         if self.amount == 1: 
             instance = KahootBot(self.gameid, self.nickname, self.crash, self.queue)
         else: 
@@ -36,6 +38,29 @@ class Swarm:
         task = instance.start()
         self.instancetotask[instance] = task
         self.tasks.append(task)
+
+
+    def killSwarm(self):
+        """ends the swarm"""
+
+        self.stop = True
+
+
+    async def stopBot(self, instance: KahootBot, task: asyncio.Task):
+        """stops a bot"""
+
+        task.cancel()
+
+        await task
+
+        self.tasks.remove(task)
+
+        del self.instancetotask[instance]
+
+
+
+
+
 
     # Async functions below
 
@@ -62,7 +87,7 @@ class Swarm:
         try:
             while True:
                 instance, error = await self.queue.get()
-                await error.handle(self.instancetotask[instance], self)
+                await error.handle(instance, self.instancetotask[instance], self)
                 self.queue.task_done()
 
         except asyncio.CancelledError:
@@ -75,7 +100,7 @@ class Swarm:
         self.crash = crash
         self.ttl = int(ttl)
         self.amount = amount
-        print(f"starting {amount} kahoot bot(s) ...")
+        logger.debug(f"starting {amount} kahoot bot(s) ...")
 
         # Start error handler task
         self.watchdog = asyncio.create_task(self.watchDog())
@@ -86,7 +111,7 @@ class Swarm:
 
         # Main loop to check if the swarm is still alive
         while self.isAlive() and not self.stop:
-            print("time remaining: " + str(self.getTimeRemaining()))
+            logger.debug("time remaining: " + str(self.getTimeRemaining()))
             await asyncio.sleep(5)
 
         await self.cleanUp()
@@ -94,4 +119,5 @@ class Swarm:
     # Task starter for the /swarm endpoint wrapped in a new task as we dont want the endpoint to live for the entire duration of the swarm.
     def createSwarm(self, gameid: int, nickname: str, crash: bool, amount: int, ttl: int):
         """Create a new swarm task and run it asynchronously."""
+        logger.info(f"New swarm creation started. Amount: {amount}, TTL: {ttl}, nickname: {nickname}")
         asyncio.create_task(self.start(gameid, nickname, crash, amount, ttl))
