@@ -36,7 +36,7 @@ Just_Another_Kahoot_Bot is a completely scalable, single-threaded Kahoot bot des
 
 ## API Documentation
 
-The API documentation is available at: [API Docs](https://distinct-cicada-mildly.ngrok-free.app/projects:kahootbot)
+The API documentation is available at: [API Docs](https://distinct-cicada-mildly.ngrok-free.app/Just_Another_Kahootbot:documentation)
 
 
 ## Installation Instructions

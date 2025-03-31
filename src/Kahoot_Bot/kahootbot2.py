@@ -3,12 +3,14 @@ import asyncio
 import websockets
 import random
 import uuid
-import json
 import time
 from .payloads import Payloads
 from .exceptions import *
 from ..challenge.runchallenge import runChallenge
+from .exceptions import SwarmHandler
 from ..logger import logger
+from ..events import compare_models_to_ingress_json
+import orjson
 
 
 
@@ -38,7 +40,7 @@ class KahootBot:
             while True:
                 for task in self.childTasks:
                     if task.done():
-                        if isinstance(task.exception(), Handler):
+                        if isinstance(task.exception(), SwarmHandler):
                             await self.errorHandler.put((self, task.exception()))
                             logger.error(f"watchDog: {task.exception()} type: {type(task.exception())}")
                             return
@@ -49,9 +51,8 @@ class KahootBot:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            logger.error(f"Unhandled error: {e}")
+            logger.error(f"WatchDog found a unhandled error in connect(): {e}")
         finally:
-            print("cleaning up")
             await self.cleanUp()
 
     async def connect(self):
@@ -64,22 +65,18 @@ class KahootBot:
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"
         }
 
-        try:
-            response = requests.get(
-                f'https://kahoot.it/reserve/session/{self.gameid}/?{time.time()}',
-                headers=headers,
-                cookies=cookies
-            )
-            response.raise_for_status()
-        except Exception as e:
-            logger.error(f"Failed to fetch challenge: {e}")
-            return
+        response = requests.get(
+            f'https://kahoot.it/reserve/session/{self.gameid}/?{time.time()}',
+            headers=headers,
+            cookies=cookies
+        )
+        response.raise_for_status()
+        
+        
 
-        try:
-            challenge_response = runChallenge(response.json()['challenge'], response.headers['x-kahoot-session-token'])
-        except Exception as e:
-            logger.error(f"Challenge function failed: {e}")
-            return
+       
+        challenge_response = runChallenge(response.json()['challenge'], response.headers['x-kahoot-session-token'])
+        
 
         logger.info(f"WebSocket URL: wss://kahoot.it/cometd/{self.gameid}/{challenge_response}")
 
@@ -102,7 +99,7 @@ class KahootBot:
     async def initialize_connection(self):
         """Handles initial WebSocket handshakes."""
         await self.wsocket.send(Payloads.__connect__())
-        response = json.loads(await self.wsocket.recv())
+        response = orjson.loads(await self.wsocket.recv())
         client_id = response[0]["clientId"]
         self.payloads = Payloads(self.gameid, client_id)
 
@@ -118,52 +115,11 @@ class KahootBot:
         try:
             async for message in self.wsocket:
                 logger.debug(f"Received raw message: {message}")
+                 
+                await compare_models_to_ingress_json(message, self)
                 
-                # Parse JSON
-                try:
-                    response = json.loads(message)
-                except json.JSONDecodeError as e:
-                    logger.error(f"JSON Decode Error: {e}, message received: {message}")
-                    continue  # Skip this iteration
                 
-                if not isinstance(response, list) or not response:
-                    logger.error(f"Unexpected response format! Expected a non-empty list.")
-                    continue
-
-                first_entry = response[0]
-
-                logger.debug(f"Parsed response: {json.dumps(first_entry, indent=2)}")
-                try:
-                    if (
-                        first_entry["data"]["type"] == "loginResponse" and
-                        first_entry["data"]["error"] == "NONEXISTING_SESSION"
-                    ):
-                        logger.warning(f"Warning - non-existent session")
-                        raise SessionNotFoundError(f"no session found with gameid {self.gameid}")
-
-                    if json.loads(first_entry["data"]["content"]).get("kickCode") == 1: 
-                        logger.warning(f"Kicked from game, reconnecting...")
-                        raise KickedFromGameError("bot kicked from game")
-
-                    if first_entry["channel"] == "/service/player" and first_entry["data"]["id"] == 1:
-                        logger.info(f"========================= Kahoot quiz incoming =========================")
-                        self.sendHartebeat = False
-                        await self.standAloneHeartBeat()
-                        self.sendHartebeat = True
-                        continue
-                    if first_entry["channel"] == "/service/player" and first_entry["data"]["id"] == 2:
-                        logger.debug(f"Answering the question...")
-                        self.sendHartebeat = False
-                        await self.standAloneHeartBeat()
-                        logger.debug(json.loads(first_entry["data"]["content"]).get("type"))
-                        await self.answerQuestion(random.randint(0,3), json.loads(first_entry["data"]["content"]).get("type"))
-                        self.sendHartebeat = True
-
-                    if first_entry["data"]["id"] == 13:
-                        raise GameEndedError("Game ended")
-                except KeyError as e:
-                    logger.error(f"KeyError: {e} - Response structure may not match expectation!")
-                    
+    
         except asyncio.CancelledError:
             return
 
@@ -198,7 +154,6 @@ class KahootBot:
     async def crasher(self): 
         try:
             while True:
-                logger.info("=====================crashing====================")
                 logger.debug(self.payloads.__crash__(self.id))
                 await self.wsocket.send(self.payloads.__crash__(self.id)) 
                 await asyncio.sleep(1)

@@ -11,7 +11,7 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 # FileHandler for logging to a file
-fh = logging.FileHandler('app.log')  # Log file name
+fh = logging.FileHandler('./app.log')  # Log file name
 fh.setLevel(logging.DEBUG)  # You can set the level for file logging
 fh.setFormatter(formatter)
 logger.addHandler(fh)

@@ -1,9 +1,10 @@
 import asyncio
 from time import time
 from typing import List
-from .kahootbot import KahootBot
+from .kahootbot2 import KahootBot
 import secrets
 from ..logger import logger
+from .exceptions import FatalError
 
 
 class Swarm:
@@ -18,6 +19,7 @@ class Swarm:
         self.queue = asyncio.Queue()  # Errors will be put in here
         self.instancetotask: dict[KahootBot, asyncio.Task] = {}
         self.stop = False
+        self.clean_execution: FatalError = None
 
     def isAlive(self) -> bool:
         """Check if the swarm is still alive based on TTL."""
@@ -86,7 +88,9 @@ class Swarm:
         """Listen for errors and handle them when they occur."""
         try:
             while True:
-                instance, error = await self.queue.get()
+                instance, error = await self.queue.get() # we know that error implements handle that is checked in the bot before sending it over.
+                if isinstance(error, FatalError):
+                    self.clean_execution = error
                 await error.handle(instance, self.instancetotask[instance], self)
                 self.queue.task_done()
 
@@ -115,6 +119,11 @@ class Swarm:
             await asyncio.sleep(5)
 
         await self.cleanUp()
+
+        # if not self.clean_execution:
+        #     e = ""
+
+        logger.info(f"Swarm with {amount} bot(s) and a lifetime of {ttl} second(s) closed [succuse status or not]")
 
     # Task starter for the /swarm endpoint wrapped in a new task as we dont want the endpoint to live for the entire duration of the swarm.
     def createSwarm(self, gameid: int, nickname: str, crash: bool, amount: int, ttl: int):

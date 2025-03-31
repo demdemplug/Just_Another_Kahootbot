@@ -27,7 +27,7 @@ async def swarm():
     # Create and start the swarm
     swarm = Swarm()
     swarm.createSwarm(int(gamepin), nickname, crash, amount, ttl) # context will return instead of waiting
-    swarmlist.append(swarm)
+    
 
 
 

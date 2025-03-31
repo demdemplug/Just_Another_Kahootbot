@@ -1,14 +1,14 @@
 
 import asyncio
 
-
-
-class Handler:
+class SwarmHandler(Exception):
     async def handle(self, instance, task: asyncio.Task, swarm):
         raise NotImplementedError(f"handle is not implemented for {self.__class__.__name__}!")
     
 
-class KickedFromGameError(Exception, Handler):
+
+
+class KickedFromGameError(SwarmHandler):
     """Thrown when the host of the kahoot game kicks out the bot"""
 
     async def handle(self, instance, task: asyncio.Task, swarm):
@@ -17,16 +17,19 @@ class KickedFromGameError(Exception, Handler):
         await swarm.stopBot(instance, task)
 
         swarm.startNewBot()
-        swarm.startNewBot()
 
-class SessionNotFoundError(Exception, Handler):
-
-    # nothing else we can do: shut down swarm
+        
+class FatalError(SwarmHandler):
     async def handle(self, instance, task: asyncio.Task, swarm):
-        swarm.killSwarm()
+        # simply restart the bot 
+        await swarm.stopBot(instance, task)
 
-class GameEndedError(Exception, Handler):
+class TooManyPlayersError(FatalError):
+    pass
+class HostDisconnectError(FatalError):
+    pass
 
-    async def handle(self, task, swarm):
-        swarm.killSwarm()
-
+class SessionNotFoundError(FatalError):
+    pass
+class GameEndedError(FatalError):
+    pass
