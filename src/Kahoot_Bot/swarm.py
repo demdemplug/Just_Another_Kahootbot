@@ -44,10 +44,6 @@ class Swarm:
 
     def killSwarm(self, error: SwarmHandler):
         """ends the swarm"""
-        if isinstance(error, FatalError):
-            self.clean_execution = error
-        else: 
-            logger.error("only allowed to kill Swarm with FatalError")
         self.stop = True
 
 
@@ -93,11 +89,15 @@ class Swarm:
             while True:
                 instance, error = await self.queue.get() # we know that error implements handle that is checked in the bot before sending it over.
                 await error.handle(instance, self.instancetotask[instance], self)
+                logger.info("got error in swarm watchdog")
                 self.queue.task_done()
 
+        
         except asyncio.CancelledError:
             return
 
+        except Exception as e:
+            logger.error("watchdog cought a unhandled error", e)
     async def start(self, gameid: int, nickname: str, crash: bool, amount: int, ttl: int):
         """Start the swarm in an async event loop with TTL check."""
         self.gameid = gameid
@@ -114,7 +114,7 @@ class Swarm:
 
         # set ttl after bots have started to 
         # make sure bots init dont take up lifetime
-        self.ttl = ttl
+        self.ttl = int(ttl)
 
         # Main loop to check if the swarm is still alive
         while self.isAlive() and not self.stop:

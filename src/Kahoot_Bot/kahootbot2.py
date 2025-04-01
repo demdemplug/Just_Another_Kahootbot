@@ -46,7 +46,7 @@ class KahootBot:
                             return
                         logger.error(f"watchDog found an unhandled error: {task.exception()}")
                         return
-                await asyncio.sleep(5)
+                await asyncio.sleep(1)
 
         except asyncio.CancelledError:
             pass
@@ -115,7 +115,7 @@ class KahootBot:
         try:
             async for message in self.wsocket:
                 logger.debug(f"Received raw message: {message}")
-                 
+                
                 await compare_models_to_ingress_json(message, self)
                 
                 
@@ -133,7 +133,7 @@ class KahootBot:
                     logger.debug(f"ID is at {self.id}")
                     logger.debug(f"Sending heartbeat: {self.payloads.__heartBeat__(self.id, self.ack)}")
                     await self.wsocket.send(self.payloads.__heartBeat__(self.id, self.ack))
-                await asyncio.sleep(3)
+                await asyncio.sleep(5)
         except asyncio.CancelledError:
             return
         
