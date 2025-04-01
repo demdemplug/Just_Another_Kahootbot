@@ -4,7 +4,7 @@ from typing import List
 from .kahootbot2 import KahootBot
 import secrets
 from ..logger import logger
-from .exceptions import FatalError
+from .exceptions import FatalError, SwarmHandler
 
 
 class Swarm:
@@ -16,7 +16,7 @@ class Swarm:
         self.gameid: int
         self.nickname: str
         self.crash: bool
-        self.queue = asyncio.Queue()  # Errors will be put in here
+        self.queue = asyncio.Queue(maxsize=100)  # Errors will be put in here
         self.instancetotask: dict[KahootBot, asyncio.Task] = {}
         self.stop = False
         self.clean_execution: FatalError = None
@@ -42,9 +42,12 @@ class Swarm:
         self.tasks.append(task)
 
 
-    def killSwarm(self):
+    def killSwarm(self, error: SwarmHandler):
         """ends the swarm"""
-
+        if isinstance(error, FatalError):
+            self.clean_execution = error
+        else: 
+            logger.error("only allowed to kill Swarm with FatalError")
         self.stop = True
 
 
@@ -89,8 +92,6 @@ class Swarm:
         try:
             while True:
                 instance, error = await self.queue.get() # we know that error implements handle that is checked in the bot before sending it over.
-                if isinstance(error, FatalError):
-                    self.clean_execution = error
                 await error.handle(instance, self.instancetotask[instance], self)
                 self.queue.task_done()
 
@@ -102,16 +103,18 @@ class Swarm:
         self.gameid = gameid
         self.nickname = nickname
         self.crash = crash
-        self.ttl = int(ttl)
         self.amount = amount
         logger.debug(f"starting {amount} kahoot bot(s) ...")
 
-        # Start error handler task
         self.watchdog = asyncio.create_task(self.watchDog())
 
-        # Start new bot instances
+        
         for _ in range(int(amount)):
             self.startNewBot()
+
+        # set ttl after bots have started to 
+        # make sure bots init dont take up lifetime
+        self.ttl = ttl
 
         # Main loop to check if the swarm is still alive
         while self.isAlive() and not self.stop:
@@ -120,10 +123,11 @@ class Swarm:
 
         await self.cleanUp()
 
-        # if not self.clean_execution:
-        #     e = ""
-
-        logger.info(f"Swarm with {amount} bot(s) and a lifetime of {ttl} second(s) closed [succuse status or not]")
+        if not self.clean_execution:
+            e = "successfully"
+        else:
+            e = f"with a error {type(self.clean_execution)}"
+        logger.info(f"Swarm with {amount} bot(s) and a lifetime of {ttl} second(s) closed {e}")
 
     # Task starter for the /swarm endpoint wrapped in a new task as we dont want the endpoint to live for the entire duration of the swarm.
     def createSwarm(self, gameid: int, nickname: str, crash: bool, amount: int, ttl: int):
