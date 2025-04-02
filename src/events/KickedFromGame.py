@@ -2,7 +2,7 @@ from pydantic import BaseModel, model_validator
 from .bases import Event
 import orjson
 from ..Kahoot_Bot.exceptions import KickedFromGameError, TooManyPlayersError
-from ..logger import logger
+from ...config.logger import logger
 
 class Ext(BaseModel):
     timetrack: int

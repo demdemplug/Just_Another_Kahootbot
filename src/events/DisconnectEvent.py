@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from .bases import Event
 from ..Kahoot_Bot.exceptions import HostDisconnectError
-from ..logger import logger
+from ...config.logger import logger
 
 class Ext(BaseModel):
     timetrack: int

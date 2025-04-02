@@ -8,7 +8,7 @@ import time
 from .payloads import Payloads
 from .exceptions import *
 from ..challenge.runchallenge import runChallenge
-from ..logger import logger
+from ...config.logger import logger
 
 
 

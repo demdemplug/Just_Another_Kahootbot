@@ -8,7 +8,7 @@ from .payloads import Payloads
 from .exceptions import *
 from ..challenge.runchallenge import runChallenge
 from .exceptions import SwarmHandler
-from ..logger import logger
+from ...config.logger import logger
 from ..events import compare_models_to_ingress_json
 import orjson
 

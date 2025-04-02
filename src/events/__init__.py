@@ -4,9 +4,9 @@ from pydantic import BaseModel
 from typing import Dict, List, Tuple, Type, Set
 from .bases import Event
 import orjson
-from .MetaConnectEvent import MetaConnectEvent
+from ..Kahoot_Bot.exceptions import UnknownJsonModelException
 from collections import defaultdict
-from ..logger import logger
+from ...config.logger import logger
 
 # ------------------------------------------------
 #                      README
@@ -82,9 +82,7 @@ def convert_basemodel_keys_to_list(model: BaseModel) -> List[str]:
 
 
 
-class UnknownJsonModelException(Exception):
-    def __init__(self, message):
-        super().__init__(message)
+
 
 
 

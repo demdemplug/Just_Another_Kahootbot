@@ -3,7 +3,7 @@ from time import time
 from typing import List
 from .kahootbot2 import KahootBot
 import secrets
-from ..logger import logger
+from ...config.logger import logger
 from .exceptions import FatalError, SwarmHandler
 
 

@@ -8,7 +8,6 @@
 *.pyd
 
 
-# Docker
-.dockerignore
+
 
 
