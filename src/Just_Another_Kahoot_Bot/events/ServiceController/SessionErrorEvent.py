@@ -1,14 +1,14 @@
 from pydantic import BaseModel
-from .bases import Event, Ext
-from ..Kahoot_Bot.exceptions import SessionNotFoundError
-from ...config.logger import logger
+from .bases import ServiceController, Ext
+from ...Kahoot_Bot.exceptions import SessionNotFoundError
+from ....config.logger import logger
 
 class Data(BaseModel):
     description: str
     type: str
     error: str
 
-class SessionErrorEvent(Event):
+class SessionErrorEvent(ServiceController):
     ext: Ext
     data: Data
     channel: str = "/service/controller"

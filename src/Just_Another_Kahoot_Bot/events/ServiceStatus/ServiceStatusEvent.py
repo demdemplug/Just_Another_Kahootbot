@@ -1,14 +1,11 @@
 from pydantic import BaseModel
-from .bases import Event
-
-class Ext(BaseModel):
-    timetrack: int
+from .bases import ServiceStatus, Ext
 
 class StatusData(BaseModel):
     type: str
     status: str
 
-class ServiceStatusEvent(Event):
+class ServiceStatusEvent(ServiceStatus):
     ext: Ext
     data: StatusData
     channel: str = "/service/status"

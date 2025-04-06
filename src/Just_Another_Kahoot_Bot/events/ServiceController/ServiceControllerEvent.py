@@ -1,14 +1,11 @@
-from .bases import Event
+from .bases import ServiceController, Ext
 from pydantic import BaseModel
-
-class Ext(BaseModel):
-    timetrack: int
 
 class Data(BaseModel):
     type: str
     cid: str
 
-class ServiceControllerEvent(Event):
+class ServiceControllerEvent(ServiceController):
     channel: str = "/service/controller"
     ext: Ext
     data: Data

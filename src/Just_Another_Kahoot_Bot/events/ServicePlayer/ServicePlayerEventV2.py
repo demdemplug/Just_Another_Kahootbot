@@ -1,6 +1,8 @@
 from pydantic import BaseModel, model_validator
 from typing import Any, Dict, List, Optional
+from .bases import ServicePlayer, Ext
 import orjson
+
 
 class AvailableCollaborations(BaseModel):
     isAutoAssign: bool
@@ -32,7 +34,7 @@ class Data(BaseModel):
     host: str
     id: int
     type: str
-    content: str 
+    content: Content
     cid: str
     trainingContentId: Optional[str] = None  
     hostPrimaryUsage: Optional[str] = None 
@@ -43,27 +45,22 @@ class Data(BaseModel):
     enableBasicPostGameSignupFlow: Optional[bool] = None  
     hostIsPublisher: Optional[bool] = None  
 
-class Ext(BaseModel):
-    timetrack: int
-
-class ServicePlayerEventV2(BaseModel):
+class ServicePlayerEventV2(ServicePlayer):
     ext: Ext
     data: Data
     channel: str = "/service/player"
-    
+
+
     @model_validator(mode='before')
     def check_required_fields(cls, values: dict) -> dict:
         content = values.get('data', {}).get('content', None)
-        
         if isinstance(content, str):
             try:
                 parsed_content = orjson.loads(content)
                 values["data"]["content"] = Content(**parsed_content)
             except orjson.JSONDecodeError:
                 raise ValueError(f"Failed to parse content as JSON: {content}")
-        
         return values
-
-
+    
     async def handle(self, instance):
         pass

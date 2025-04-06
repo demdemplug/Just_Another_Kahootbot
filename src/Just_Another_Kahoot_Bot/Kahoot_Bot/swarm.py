@@ -44,6 +44,7 @@ class Swarm:
 
     def killSwarm(self, error: SwarmHandler):
         """ends the swarm"""
+        self.clean_execution = error
         self.stop = True
 
 
@@ -89,7 +90,6 @@ class Swarm:
             while True:
                 instance, error = await self.queue.get() # we know that error implements handle that is checked in the bot before sending it over.
                 await error.handle(instance, self.instancetotask[instance], self)
-                logger.info("got error in swarm watchdog")
                 self.queue.task_done()
 
         

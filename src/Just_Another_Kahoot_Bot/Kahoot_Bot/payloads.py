@@ -10,7 +10,7 @@ class Payloads:
     questionIndex: int = 0
     L = random.randint(100, 999),
     O =random.randint(-999, -100)
-    payloadforstartwars = [3, 2, 0, 1, 2, 1, 3, 0, 2, 3]
+    
 
     
     def __init__(self, gameid: str | int, clientid: str) -> None:

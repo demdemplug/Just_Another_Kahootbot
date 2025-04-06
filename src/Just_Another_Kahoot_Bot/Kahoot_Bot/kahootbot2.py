@@ -143,13 +143,17 @@ class KahootBot:
         await self.wsocket.send(self.payloads.__heartBeat__(self.id, self.ack))
         logger.debug(f"Sent standalone heartbeat")
 
-    async def answerQuestion(self, choice, type):
+    # known choices: 
+    # drop_pin
+    async def answerQuestion(self, amount_of_choices, type):
         """Handles answering Kahoot questions."""
-    
+        await self.standAloneHeartBeat()
+        t = time.time()
         self.id += 1
-        logger.debug(f"Sending answer choice: {choice}")
+        choice = random.randint(0, amount_of_choices - 1)
         await self.wsocket.send(self.payloads.__answerQuestion__(self.id, choice, type))
-        logger.info(f"Answer sent. choice: {choice}")
+        t = t - time.time()
+        logger.info(f"bot {self.nickname} sent answer in time {t}, choice: {choice} type of question: {type} ")
 
     async def crasher(self): 
         try:

@@ -27,7 +27,7 @@ class TooManyPlayersError(SwarmHandler):
 class FatalError(SwarmHandler):
     async def handle(self, instance, task: asyncio.Task, swarm):
         # simply restart the bot 
-        await swarm.killSwarm(instance, task)
+        swarm.killSwarm(self)
 
 
 class HostDisconnectError(FatalError):

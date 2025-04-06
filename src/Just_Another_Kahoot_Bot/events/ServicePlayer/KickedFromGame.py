@@ -1,11 +1,8 @@
 from pydantic import BaseModel, model_validator
-from .bases import Event
+from .bases import ServicePlayer, Ext
 import orjson
-from ..Kahoot_Bot.exceptions import KickedFromGameError, TooManyPlayersError
-from ...config.logger import logger
-
-class Ext(BaseModel):
-    timetrack: int
+from ...Kahoot_Bot.exceptions import KickedFromGameError, TooManyPlayersError
+from ....config.logger import logger
 
 class Content(BaseModel):
     kickCode: int
@@ -18,7 +15,7 @@ class Data(BaseModel):
     content: Content
     cid: str
 
-class KickedFromGame(Event):
+class KickedFromGame(ServicePlayer):
     ext: Ext
     data: Data
     channel: str = "/service/player"
@@ -26,7 +23,6 @@ class KickedFromGame(Event):
     @model_validator(mode='before')
     def check_required_fields(cls, values: dict) -> dict:
         content = values.get('data', {}).get('content', None)
-        
         if isinstance(content, str):
             try:
                 parsed_content = orjson.loads(content)
@@ -34,6 +30,8 @@ class KickedFromGame(Event):
             except orjson.JSONDecodeError:
                 raise ValueError(f"Failed to parse content as JSON: {content}")
         return values
+    
+    
     
     async def handle(self, instance):
         if self.data.content.kickCode == 1:

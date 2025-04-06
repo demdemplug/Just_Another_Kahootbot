@@ -1,11 +1,7 @@
-from pydantic import BaseModel
-from .bases import Event  
+from .bases import MetaConnect, Ext 
 
 
-class Ext(BaseModel):
-    ack: int
-
-class MetaConnectEventV2(Event):
+class MetaConnectEventV2(MetaConnect):
     channel: str = "/meta/connect"
     ext: Ext
     id: str

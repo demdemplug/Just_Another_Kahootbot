@@ -8,6 +8,7 @@ from ..Kahoot_Bot.exceptions import UnknownJsonModelException
 from collections import defaultdict
 from ...config.logger import logger
 
+
 # ------------------------------------------------
 #                      README
 # ------------------------------------------------
@@ -92,27 +93,40 @@ event_classes: Dict[str, Dict[Type[BaseModel], Set[str]]] = defaultdict(dict)
 
 events_dir = os.path.dirname(__file__) 
 
-for filename in os.listdir(events_dir):
-    if filename.endswith(".py") and filename != "__init__.py" and filename != "event.py":
-        module_name = f".{filename[:-3]}"  
-        module = importlib.import_module(module_name, package=__name__)
+for root, _, files in os.walk(events_dir):
+
+    for filename in files:
+
+        if filename.endswith(".py") and filename != "__init__.py" and filename != "bases.py":
+            file_location = os.path.relpath(os.path.join(root, filename), events_dir).replace("/", ".")
+            module_location = f".{file_location[:-3]}"  
             
-        for attr_name in dir(module):
-            
-            attr = getattr(module, attr_name)
-            if isinstance(attr, type) and issubclass(attr, BaseModel) and issubclass(attr, Event) and attr not in (BaseModel, Event):
-                if not "channel" in attr.model_fields:
-                    logger.warning(f"warning: class {attr} does not have a channel type... skiping")
-                    continue
-            
-                channel = attr.model_fields["channel"].default
+
+            module = importlib.import_module(module_location, package=__name__)
+
+            for attr_name in dir(module):
                 
-                event_classes[channel][attr] = set(convert_basemodel_keys_to_list(attr))
-       
                 
+                attr = getattr(module, attr_name)
+                if (
+                    isinstance(attr, type) 
+                    and issubclass(attr, BaseModel) 
+                    and issubclass(attr, Event) 
+                    and attr not in (BaseModel, Event)
+                    and Event not in attr.__bases__
+                ):
+                    logger.info(f"Loading event class {attr} into the map.")
+                    if not "channel" in attr.model_fields:
+                        logger.warning(f"warning: class {attr} does not have a channel type... skiping")
+                        continue
+                
+                    module_channel = attr.model_fields["channel"].default
 
-
-
+                    event_classes[module_channel][attr] = set(convert_basemodel_keys_to_list(attr))
+                    
+                   
+            
+                
 
 
 debug_class_use_times: Dict[Type[BaseModel], int] = defaultdict(int)

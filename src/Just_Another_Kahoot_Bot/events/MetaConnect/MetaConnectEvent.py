@@ -1,15 +1,12 @@
 from pydantic import BaseModel
-from .bases import Event  
-
-class Ext(BaseModel):
-    ack: int
+from .bases import MetaConnect, Ext
 
 class Advice(BaseModel):
     interval: int
     timeout: int
     reconnect: str
 
-class MetaConnectEvent(Event):
+class MetaConnectEvent(MetaConnect):
     channel: str = "/meta/connect"
     ext: Ext
     advice: Advice
