@@ -31,32 +31,34 @@ class KahootBot:
         self.sendHartebeat = True
         self.childTasks = []
 
-    def start(self):
-        return asyncio.create_task(self.watchDog())
+    def startBot(self):
+        return asyncio.create_task(self.connect())
 
-    async def watchDog(self):
-        try: 
-            await self.connect()
-            while True:
-                for task in self.childTasks:
-                    if task.done():
-                        if isinstance(task.exception(), SwarmHandler):
-                            await self.errorHandler.put((self, task.exception()))
-                            logger.error(f"watchDog: {task.exception()} type: {type(task.exception())}")
-                            return
-                        logger.error(f"watchDog found an unhandled error: {task.exception()}")
-                        return
-                await asyncio.sleep(1)
+    # async def watchDog(self):
+    #     try: 
+    #         await self.connect()
+    #         while True:
+    #             for task in self.childTasks:
+    #                 if task.done():
+                        
+    #                     if isinstance(task.exception(), SwarmHandler):
+    #                         await self.errorHandler.put((self, task.exception()))
+    #                         logger.warning(f"watchDog: {task.exception()} type: {type(task.exception())}")
+    #                         return
+    #                     logger.error(f"watchDog found an unhandled error: {task.exception()}")
+    #                     return
+    #             await asyncio.sleep(3)
 
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            logger.error(f"WatchDog found a unhandled error in connect(): {e}")
-        finally:
-            await self.cleanUp()
+    #     except asyncio.CancelledError:
+    #         pass
+    #     except Exception as e:
+    #         logger.error(f"WatchDog found a unhandled error in connect(): {e}")
+    #     finally:
+    #         await self.cleanUp()
 
     async def connect(self):
         """Handles connecting to the Kahoot WebSocket server."""
+    
         cookies = {
             "generated_uuid": str(uuid.uuid4()),
             "player": "active"
@@ -71,13 +73,12 @@ class KahootBot:
             cookies=cookies
         )
         response.raise_for_status()
-        
-        
+            
+            
 
-       
+        
         challenge_response = runChallenge(response.json()['challenge'], response.headers['x-kahoot-session-token'])
         
-
         logger.info(f"WebSocket URL: wss://kahoot.it/cometd/{self.gameid}/{challenge_response}")
 
         logger.info(f"Connecting to WebSocket...")
@@ -92,9 +93,20 @@ class KahootBot:
         await self.initialize_connection()
         self.childTasks.append(asyncio.create_task(self.heartBeat()))
         self.childTasks.append(asyncio.create_task(self.receiveMessages()))
-            
+                
         if self.crash:
             self.childTasks.append(asyncio.create_task(self.crasher()))
+        
+        try: 
+
+            while True:
+                await asyncio.sleep(3)
+
+        except asyncio.CancelledError:
+            await self.cleanUp()
+            logger.debug("bot has been cleaned up bot side")
+            return
+            
 
     async def initialize_connection(self):
         """Handles initial WebSocket handshakes."""
@@ -112,16 +124,21 @@ class KahootBot:
 
     async def receiveMessages(self):
         """Receives and logs messages from the WebSocket."""
-        try:
+        try: 
             async for message in self.wsocket:
-                logger.debug(f"Received raw message: {message}")
-                
-                await compare_models_to_ingress_json(message, self)
-                
-                
-    
+                try:
+                    await compare_models_to_ingress_json(message, self)
+                except SwarmHandler as e:
+                    await self.errorHandler.put((self, e))
+                except FatalError as e:
+                    logger.debug(f"Caught Swarm Fatel exception: {e}")
+
+                    # error is in queue. pass for swarm to close cleanly 
+        
         except asyncio.CancelledError:
             return
+
+        
 
     async def heartBeat(self):
         """Sends periodic heartbeat messages to keep the connection alive."""
@@ -130,8 +147,6 @@ class KahootBot:
                 if self.sendHartebeat:
                     self.id += 1
                     self.ack += 1
-                    logger.debug(f"ID is at {self.id}")
-                    logger.debug(f"Sending heartbeat: {self.payloads.__heartBeat__(self.id, self.ack)}")
                     await self.wsocket.send(self.payloads.__heartBeat__(self.id, self.ack))
                 await asyncio.sleep(5)
         except asyncio.CancelledError:
@@ -161,7 +176,6 @@ class KahootBot:
                 logger.debug(self.payloads.__crash__(self.id))
                 await self.wsocket.send(self.payloads.__crash__(self.id)) 
                 await asyncio.sleep(1)
-                logger.debug("here")
         except asyncio.CancelledError:
             return
 
@@ -170,6 +184,7 @@ class KahootBot:
             if not task.done():  # Only cancel tasks that are still running
                 task.cancel()
                 try:
+                    logger.debug(f"Cleaning up tasks in bot {self.nickname}")
                     await task  # Ensure graceful cancellation
                 except Exception as e:
                     logger.error(f"Error during cleanup: {e}")  # Handle other unexpected errors

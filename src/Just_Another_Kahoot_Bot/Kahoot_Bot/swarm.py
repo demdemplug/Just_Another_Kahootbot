@@ -1,6 +1,7 @@
 import asyncio
 from time import time
 from typing import List
+import traceback
 from .kahootbot2 import KahootBot
 import secrets
 from ...config.logger import logger
@@ -37,7 +38,7 @@ class Swarm:
         else: 
             instance = KahootBot(self.gameid, f"{self.nickname}{secrets.token_hex(4)}", self.crash, self.queue)
         
-        task = instance.start()
+        task = instance.startBot()
         self.instancetotask[instance] = task
         self.tasks.append(task)
 
@@ -54,7 +55,7 @@ class Swarm:
         task.cancel()
 
         await task
-
+        logger.debug(f"Bot {instance.nickname} has been removed on the swarm side.")
         self.tasks.remove(task)
 
         del self.instancetotask[instance]
@@ -65,69 +66,80 @@ class Swarm:
 
 
     # Async functions below
+    async def cleanUp(self, timeout: float = 5.0):
+        """Cancel all running tasks with timeout and diagnostics."""
+        try:
+            for index, task in enumerate(self.tasks):
+                if task.done():
+                    logger.debug(f"Bot {index} already completed.")
+                    
+                    continue
 
-    async def cleanUp(self):
-        """Cancel all running tasks."""
+                task.cancel()
+                try:
+                    await asyncio.wait_for(task, timeout=timeout)
+                    logger.debug(f"Bot {index} closed cleanly.")
+                except asyncio.TimeoutError:
+                    logger.warning(f"Bot {index} did NOT shut down in {timeout}s.")
+                except Exception as e:
+                    logger.exception(f"Bot {index} crashed during cleanup: {e}")
 
-        for task in self.tasks:
-            
-            task.cancel()
-            await task  # Ensure graceful cancellation
+            self.watchdog.cancel()    
+            await self.watchdog 
+            self.tasks.clear()
+            self.instancetotask.clear()
+        except Exception as e:
+            logger.exception("Failed during cleanup")
 
-        
-        self.watchdog.cancel()    
-        await self.watchdog 
-        
-       
-        self.tasks.clear()
-        self.instancetotask.clear()
 
     
 
     async def watchDog(self):
-        """Listen for errors and handle them when they occur."""
-        try:
-            while True:
-                instance, error = await self.queue.get() # we know that error implements handle that is checked in the bot before sending it over.
+    
+        while True:
+            try:
+                instance, error = await self.queue.get()
                 await error.handle(instance, self.instancetotask[instance], self)
                 self.queue.task_done()
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print("default exception caught in swarm:", e)
 
-        
-        except asyncio.CancelledError:
-            return
-
-        except Exception as e:
-            logger.error("watchdog cought a unhandled error", e)
     async def start(self, gameid: int, nickname: str, crash: bool, amount: int, ttl: int):
         """Start the swarm in an async event loop with TTL check."""
-        self.gameid = gameid
-        self.nickname = nickname
-        self.crash = crash
-        self.amount = amount
-        logger.debug(f"starting {amount} kahoot bot(s) ...")
+        try:
+            self.gameid = gameid
+            self.nickname = nickname
+            self.crash = crash
+            self.amount = amount
+            logger.debug(f"starting {amount} kahoot bot(s) ...")
 
-        self.watchdog = asyncio.create_task(self.watchDog())
+            self.watchdog = asyncio.create_task(self.watchDog())
 
-        
-        for _ in range(int(amount)):
-            self.startNewBot()
+            
+            for _ in range(int(amount)):
+                self.startNewBot()
 
-        # set ttl after bots have started to 
-        # make sure bots init dont take up lifetime
-        self.ttl = int(ttl)
+            # set ttl after bots have started to 
+            # make sure bots init dont take up lifetime
+            self.ttl = int(ttl)
+            logger.debug("Time Starting...")
+            # Main loop to check if the swarm is still alive
+            while self.isAlive() and not self.stop:
+                logger.info("time remaining: " + str(self.getTimeRemaining()) + "Amount of bots: " + str(len(self.tasks)))
+                await asyncio.sleep(5)
 
-        # Main loop to check if the swarm is still alive
-        while self.isAlive() and not self.stop:
-            logger.debug("time remaining: " + str(self.getTimeRemaining()))
-            await asyncio.sleep(5)
+            await self.cleanUp()
 
-        await self.cleanUp()
+            if not self.clean_execution:
+                e = "successfully"
+            else:
+                e = f"with a error {type(self.clean_execution)}"
+            logger.info(f"Swarm with {amount} bot(s) and a lifetime of {ttl} second(s) closed {e}")
+        except Exception as e:
+            logger.error(f"Found error in swarm: {e}")
 
-        if not self.clean_execution:
-            e = "successfully"
-        else:
-            e = f"with a error {type(self.clean_execution)}"
-        logger.info(f"Swarm with {amount} bot(s) and a lifetime of {ttl} second(s) closed {e}")
 
     # Task starter for the /swarm endpoint wrapped in a new task as we dont want the endpoint to live for the entire duration of the swarm.
     def createSwarm(self, gameid: int, nickname: str, crash: bool, amount: int, ttl: int):

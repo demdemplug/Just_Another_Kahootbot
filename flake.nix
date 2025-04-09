@@ -12,12 +12,12 @@
     in {
       devShells.${system}.default = pkgs.mkShell {
         buildInputs = [
-          pkgs.python312
-          pkgs.python312Packages.requests
-          pkgs.python312Packages.websockets
-          pkgs.python312Packages.quart
-          pkgs.python312Packages.pydantic
-          pkgs.python312Packages.orjson
+          pkgs.python313
+          pkgs.python313Packages.requests
+          pkgs.python313Packages.websockets
+          pkgs.python313Packages.quart
+          pkgs.python313Packages.pydantic
+          pkgs.python313Packages.orjson
           pkgs.nodejs
           pkgs.yarn
         ];

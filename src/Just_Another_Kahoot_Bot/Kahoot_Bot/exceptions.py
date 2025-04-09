@@ -13,16 +13,14 @@ class KickedFromGameError(SwarmHandler):
 
     async def handle(self, instance, task: asyncio.Task, swarm):
         
-        # simply restart the bot 
+        # simply restart the bot
         await swarm.stopBot(instance, task)
-
         swarm.startNewBot()
 
 class TooManyPlayersError(SwarmHandler):
     async def handle(self, instance, task: asyncio.Task, swarm):
         await swarm.stopBot(instance, task)
 
-        swarm.startNewBot()
 
 class FatalError(SwarmHandler):
     async def handle(self, instance, task: asyncio.Task, swarm):
