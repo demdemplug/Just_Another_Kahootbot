@@ -55,19 +55,26 @@ cd Just_Another_Kahootbot
 
 To build the Docker container, run the following command in the project's root directory:
 ```bash
-docker build -t just_another_kahootbot .
+docker build -t <Your User/Gamertag>/just_another_kahootbot .
 ```
 
-Once built, replace the image reference in `deployment.yaml` with the locally built Docker image:
+Once built, push the container to a registry like Docker Hub or Harbor if you have it on your cluster.
+```bash
+docker push <Your User/Gamertag>/just_another_kahootbot
+```
+
+Then change the repository location in the values.yaml file:
 ```yaml
-image: just_another_kahootbot
+image:
+  repository: <Your User/Gamertag>/just_another_kahootbot
+  tag: <YourTag>
 ```
 
 ## Deployment
 
-Deploy the application using:
+In the root Deploy the application using:
 ```bash
-kubectl apply -f deployment.yaml
+helm upgrade --install deployments -f deployments/values.yaml
 ```
 
 ### Verifying Deployment
