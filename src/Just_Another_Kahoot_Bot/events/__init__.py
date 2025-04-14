@@ -20,7 +20,7 @@ from ...config.logger import logger
 # 
 # The primary goal of this script is to parse and handle Kahoot's event responses 
 # and map them to the correct internal models, a task that would have been much 
-# simpler with proper event identification from Kahoot. also the responses dont even make any fucking sense for example i have a 
+# simpler with proper event identification from Kahoot. Also the responses dont even make any fucking sense for example i have a 
 # 
 # If you're wondering why this exists, now you know.
 # ------------------------------------------------
@@ -108,6 +108,7 @@ for root, _, files in os.walk(events_dir):
                 
                 
                 attr = getattr(module, attr_name)
+                # TODO MAKE COMMONT HERE
                 if (
                     isinstance(attr, type) 
                     and issubclass(attr, BaseModel) 

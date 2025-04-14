@@ -1,0 +1,36 @@
+# your namespace
+namespace: utility
+
+# Your deployment name
+deploymentName: just-another-kahoot-bot
+
+# This is a good starting point
+replicaCount: 3
+
+# If you're using a local image, you can replace this
+image:
+  repository: feelfeel200088/just_another_kahoot_bot
+  tag: latest
+  pullPolicy: Always
+
+containerPort: 8000
+
+# Single-threaded: so only needs 1 cpu
+# I'm not too sure about memory limits, but I've never had issues with 8Gi.
+# Feel free to experiment with the memory and open an issue if you got problems 
+# with 8Gi or you think 8Gi is to much.
+resources:
+  limits:
+    memory: "8Gi"
+    cpu: "1"
+
+# put whatever you want for your pod port
+service:
+  port: 8000
+
+internalService:
+  enabled: true
+
+externalService:
+  enabled: true
+  nodePort: 30005

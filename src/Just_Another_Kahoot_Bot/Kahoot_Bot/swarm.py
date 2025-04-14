@@ -2,7 +2,7 @@ import asyncio
 from time import time
 from typing import List
 import traceback
-from .kahootbot2 import KahootBot
+from .kahootBot import KahootBot
 import secrets
 from ...config.logger import logger
 from .exceptions import FatalError, SwarmHandler
@@ -72,6 +72,10 @@ class Swarm:
             for index, task in enumerate(self.tasks):
                 if task.done():
                     logger.debug(f"Bot {index} already completed.")
+                    
+                    e = task.exception()
+                    if e:
+                        logger.debug(f"Cleanup found error in kahoot bot {index}. Error: {e}")
                     
                     continue
 
