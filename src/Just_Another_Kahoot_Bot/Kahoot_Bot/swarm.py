@@ -139,7 +139,7 @@ class Swarm:
             if not self.clean_execution:
                 e = "successfully"
             else:
-                e = f"with a error {type(self.clean_execution)}"
+                e = f"with a error: {type(self.clean_execution).__name__} error details: {self.clean_execution}"
             logger.info(f"Swarm with {amount} bot(s) and a lifetime of {ttl} second(s) closed {e}")
         except Exception as e:
             logger.error(f"Found error in swarm: {e}")
